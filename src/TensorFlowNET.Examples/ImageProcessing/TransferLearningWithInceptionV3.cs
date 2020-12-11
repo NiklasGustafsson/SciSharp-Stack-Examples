@@ -35,7 +35,7 @@ namespace TensorFlowNET.Examples
     /// 
     /// https://www.tensorflow.org/hub/tutorials/image_retraining
     /// </summary>
-    public class RetrainClassifierWithInceptionV3 : SciSharpExample, IExample
+    public class TransferLearningWithInceptionV3 : SciSharpExample, IExample
     {
         const string data_dir = "retrain_images";
         string summaries_dir = Path.Join(data_dir, "retrain_logs");
@@ -74,13 +74,15 @@ namespace TensorFlowNET.Examples
         public ExampleConfig InitConfig()
             => Config = new ExampleConfig
             {
-                Name = "Retrain Classifier With InceptionV3",
+                Name = "Transfer Learning With InceptionV3 (Graph)",
                 Enabled = true,
                 IsImportingGraph = true
             };
 
         public bool Run()
         {
+            tf.compat.v1.disable_eager_execution();
+
             PrepareData();
 
             #region For debug purpose
@@ -191,24 +193,24 @@ namespace TensorFlowNET.Examples
             Tensor logits = null;
             tf_with(tf.name_scope(layer_name), scope =>
             {
-                RefVariable layer_weights = null;
+                IVariableV1 layer_weights = null;
                 tf_with(tf.name_scope("weights"), delegate
                 {
                     var initial_value = tf.truncated_normal(new int[] { bottleneck_tensor_size, class_count }, stddev: 0.001f);
                     layer_weights = tf.Variable(initial_value, name: "final_weights");
-                    variable_summaries(layer_weights);
+                    variable_summaries(layer_weights.AsTensor());
                 });
 
-                RefVariable layer_biases = null;
+                IVariableV1 layer_biases = null;
                 tf_with(tf.name_scope("biases"), delegate
                 {
                     layer_biases = tf.Variable(tf.zeros(new TensorShape(class_count)), name: "final_biases");
-                    variable_summaries(layer_biases);
+                    variable_summaries(layer_biases.AsTensor());
                 });
 
                 tf_with(tf.name_scope("Wx_plus_b"), delegate
                 {
-                    logits = tf.matmul(bottleneck_input, layer_weights) + layer_biases;
+                    logits = tf.matmul(bottleneck_input, layer_weights.AsTensor()) + layer_biases.AsTensor();
                     tf.summary.histogram("pre_activations", logits);
                 });
             });
@@ -253,7 +255,7 @@ namespace TensorFlowNET.Examples
                 final_tensor);
         }
 
-        private void variable_summaries(RefVariable var)
+        private void variable_summaries(Tensor var)
         {
             tf_with(tf.name_scope("summaries"), delegate
             {
@@ -278,7 +280,7 @@ namespace TensorFlowNET.Examples
             tf.train.import_meta_graph("graph/InceptionV3.meta");
             var vars = tf.get_collection<ResourceVariable>(tf.GraphKeys.GLOBAL_VARIABLES);
             Tensor resized_input_tensor = graph.OperationByName(input_tensor_name); //tf.placeholder(tf.float32, new TensorShape(-1, height, width, 3));
-                                                                                // var m = hub.Module(module_spec);
+                                                                                    // var m = hub.Module(module_spec);
             Tensor bottleneck_tensor = graph.OperationByName("module_apply_default/hub_output/feature_vector/SpatialSqueeze");// m(resized_input_tensor);
             var wants_quantization = false;
             return (graph, bottleneck_tensor, resized_input_tensor, wants_quantization);
@@ -380,7 +382,7 @@ namespace TensorFlowNET.Examples
         {
             int how_many_bottlenecks = 0;
             var kvs = image_lists.ToArray();
-            var categories = new string[] {"training", "testing", "validation"};
+            var categories = new string[] { "training", "testing", "validation" };
             Parallel.For(0, kvs.Length, i =>
             {
                 var (label_name, label_lists) = kvs[i];
@@ -754,7 +756,7 @@ namespace TensorFlowNET.Examples
         {
             var graph = tf.Graph().as_default();
 
-            var file_reader = tf.read_file(file_name, "file_reader");
+            var file_reader = tf.io.read_file(file_name, "file_reader");
             var image_reader = tf.image.decode_jpeg(file_reader, channels: 3, name: "jpeg_reader");
             var caster = tf.cast(image_reader, tf.float32);
             var dims_expander = tf.expand_dims(caster, 0);

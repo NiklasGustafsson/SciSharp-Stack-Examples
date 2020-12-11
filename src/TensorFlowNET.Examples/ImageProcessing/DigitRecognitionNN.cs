@@ -14,7 +14,6 @@
    limitations under the License.
 ******************************************************************************/
 
-using System;
 using System.Diagnostics;
 using Tensorflow;
 using static Tensorflow.Binding;
@@ -53,13 +52,15 @@ namespace TensorFlowNET.Examples
             => Config = new ExampleConfig
             {
                 Name = "Digits Recognition Neural Network",
-                Enabled = true,
+                Enabled = false,
                 IsImportingGraph = false,
                 Priority = 9
             };
 
         public bool Run()
         {
+            tf.compat.v1.disable_eager_execution();
+
             PrepareData();
             BuildGraph();
 
@@ -101,22 +102,22 @@ namespace TensorFlowNET.Examples
             var in_dim = x.shape[1];
 
             var initer = tf.truncated_normal_initializer(stddev: 0.01f);
-            var W = tf.get_variable("W_" + name,
+            var W = tf.compat.v1.get_variable("W_" + name,
                         dtype: tf.float32,
                         shape: (in_dim, num_units),
                         initializer: initer);
 
             var initial = tf.constant(0f, shape: num_units);
-            var b = tf.get_variable("b_" + name,
+            var b = tf.compat.v1.get_variable("b_" + name,
                         dtype: tf.float32,
                         initializer: initial);
 
-            var layer = tf.matmul(x, W) + b;
+            var layer = tf.matmul(x, W.AsTensor()) + b.AsTensor();
             if (use_relu)
                 layer = tf.nn.relu(layer);
 
             return layer;
-        } 
+        }
 
         public override void PrepareData()
         {

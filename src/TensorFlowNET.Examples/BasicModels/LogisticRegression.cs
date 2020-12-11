@@ -15,7 +15,6 @@
 ******************************************************************************/
 
 using NumSharp;
-using System;
 using System.Diagnostics;
 using System.IO;
 using Tensorflow;
@@ -45,14 +44,16 @@ namespace TensorFlowNET.Examples
         public ExampleConfig InitConfig()
             => Config = new ExampleConfig
             {
-                Name = "Logistic Regression",
+                Name = "Logistic Regression (Graph)",
                 Enabled = true,
                 IsImportingGraph = false,
-                Priority = 5
+                Priority = 6
             };
 
         public bool Run()
         {
+            tf.compat.v1.disable_eager_execution();
+
             PrepareData();
             Train();
 
@@ -133,7 +134,7 @@ namespace TensorFlowNET.Examples
                 // Calculate accuracy
                 var acc = tf.reduce_mean(tf.cast(correct_prediction, tf.float32));
                 accuracy = acc.eval(sess, (x, mnist.Test.Data), (y, mnist.Test.Labels));
-                print($"Accuracy: {acc:F4}");
+                print($"Accuracy: {accuracy:F4}");
             }
         }
 
@@ -158,7 +159,7 @@ namespace TensorFlowNET.Examples
         public override void Predict()
         {
             var graph = new Graph().as_default();
-            using(var sess = tf.Session(graph))
+            using (var sess = tf.Session(graph))
             {
                 graph.Import(Path.Join(".resources/logistic_regression", "model.pb"));
 

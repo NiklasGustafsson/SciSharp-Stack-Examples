@@ -14,22 +14,18 @@
    limitations under the License.
 ******************************************************************************/
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Tensorflow;
-
 namespace TensorFlowNET.Examples
 {
     /// <summary>
-    /// https://www.tensorflow.org/tutorials/images/deep_cnn
+    /// A toy ResNet model
+    /// https://keras.io/guides/functional_api/
     /// </summary>
     public class CIFAR10_CNN : SciSharpExample, IExample
     {
         public ExampleConfig InitConfig()
             => Config = new ExampleConfig
             {
-                Name = "CIFAR-10 CNN",
+                Name = "CIFAR10 ResNet (Keras Functional)",
                 Enabled = false,
                 IsImportingGraph = false
             };

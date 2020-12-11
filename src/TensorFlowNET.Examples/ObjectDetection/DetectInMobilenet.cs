@@ -16,12 +16,12 @@
 
 using NumSharp;
 using System;
-using System.IO;
-using Tensorflow;
-using TensorFlowNET.Examples.Utility;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Linq;
+using Tensorflow;
+using TensorFlowNET.Examples.Utility;
 using static Tensorflow.Binding;
 
 namespace TensorFlowNET.Examples
@@ -39,13 +39,15 @@ namespace TensorFlowNET.Examples
         public ExampleConfig InitConfig()
             => Config = new ExampleConfig
             {
-                Name = "Object Detection",
+                Name = "Object Detection in MobileNet (Graph)",
                 Enabled = true,
                 IsImportingGraph = true
             };
 
         public bool Run()
         {
+            tf.compat.v1.disable_eager_execution();
+
             PrepareData();
 
             Predict();
@@ -104,7 +106,7 @@ namespace TensorFlowNET.Examples
         {
             var graph = tf.Graph().as_default();
 
-            var file_reader = tf.read_file(file_name, "file_reader");
+            var file_reader = tf.io.read_file(file_name, "file_reader");
             var decodeJpeg = tf.image.decode_jpeg(file_reader, channels: 3, name: "DecodeJpeg");
             var casted = tf.cast(decodeJpeg, TF_DataType.TF_UINT8);
             var dims_expander = tf.expand_dims(casted, 0);
@@ -124,7 +126,7 @@ namespace TensorFlowNET.Examples
             var scores = resultArr[2].AsIterator<float>();
             var boxes = resultArr[1].GetData<float>();
             var id = np.squeeze(resultArr[3]).GetData<float>();
-            for (int i=0; i< scores.size; i++)
+            for (int i = 0; i < scores.size; i++)
             {
                 float score = scores.MoveNext();
                 if (score > MIN_SCORE)
@@ -142,7 +144,7 @@ namespace TensorFlowNET.Examples
                         Height = (int)(bottom - top)
                     };
 
-                    string name = pbTxtItems.items.Where(w => w.id == id[i]).Select(s=>s.display_name).FirstOrDefault();
+                    string name = pbTxtItems.items.Where(w => w.id == id[i]).Select(s => s.display_name).FirstOrDefault();
 
                     drawObjectOnBitmap(bitmap, rect, score, name);
                 }
@@ -158,7 +160,7 @@ namespace TensorFlowNET.Examples
             using (Graphics graphic = Graphics.FromImage(bmp))
             {
                 graphic.SmoothingMode = SmoothingMode.AntiAlias;
-                
+
                 using (Pen pen = new Pen(Color.Red, 2))
                 {
                     graphic.DrawRectangle(pen, rect);

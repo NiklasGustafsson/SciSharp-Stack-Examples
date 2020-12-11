@@ -1,13 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Tensorflow;
+using Tensorflow.Keras.Layers;
 
 namespace TensorFlowNET.Examples
 {
     public class SciSharpExample
     {
         public ExampleConfig Config { get; set; }
+        protected LayersApi layers = new LayersApi();
 
         public virtual void BuildModel()
         {
@@ -31,7 +31,7 @@ namespace TensorFlowNET.Examples
 
         public virtual void Train()
         {
-            
+
         }
 
         public virtual void Test()

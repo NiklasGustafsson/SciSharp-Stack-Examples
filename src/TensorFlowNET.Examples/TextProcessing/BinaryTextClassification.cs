@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using NumSharp;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using Tensorflow;
 using System.Linq;
-using NumSharp;
-using Newtonsoft.Json;
+using static Tensorflow.KerasApi;
 
 namespace TensorFlowNET.Examples
 {
@@ -36,7 +36,7 @@ namespace TensorFlowNET.Examples
 
             // A dictionary mapping words to an integer index
             var word_index = GetWordIndex();
-            
+
             /*train_data = keras.preprocessing.sequence.pad_sequences(train_data,
                 value: word_index["<PAD>"],
                 padding: "post",
@@ -51,8 +51,8 @@ namespace TensorFlowNET.Examples
             int vocab_size = 10000;
 
             var model = keras.Sequential();
-            var layer = keras.layers.Embedding(vocab_size, 16);
-            model.add(layer);
+            //var layer = tf.keras.layers.Embedding(vocab_size, 16);
+            //model.add(layer);
 
             return false;
         }

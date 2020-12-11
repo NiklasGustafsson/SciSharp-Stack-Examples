@@ -1,12 +1,11 @@
 ﻿using NumSharp;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using Console = Colorful.Console;
-using Tensorflow;
 using System.Drawing;
+using System.IO;
+using Tensorflow;
 using static Tensorflow.Binding;
+using Console = Colorful.Console;
 
 namespace TensorFlowNET.Examples
 {
@@ -33,7 +32,7 @@ namespace TensorFlowNET.Examples
         public bool Run()
         {
             PrepareData();
-           
+
             var graph = new Graph();
             //import GraphDef from pb file
             graph.Import(Path.Join(dir, pbFile));
@@ -62,7 +61,7 @@ namespace TensorFlowNET.Examples
                     result_labels.Add(labels[idx]);
                 }
             }
-            
+
             return result_labels.Contains("military uniform");
         }
 
@@ -74,7 +73,7 @@ namespace TensorFlowNET.Examples
         {
             var graph = tf.Graph().as_default();
 
-            var file_reader = tf.read_file(file_name, "file_reader");
+            var file_reader = tf.io.read_file(file_name, "file_reader");
             var decodeJpeg = tf.image.decode_jpeg(file_reader, channels: 3, name: "DecodeJpeg");
             var cast = tf.cast(decodeJpeg, tf.float32);
             var dims_expander = tf.expand_dims(cast, 0);
