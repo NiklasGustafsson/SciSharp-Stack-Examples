@@ -22,6 +22,7 @@ using System.Linq;
 using System.Reflection;
 using Tensorflow;
 using static Tensorflow.Binding;
+using static Tensorflow.KerasApi;
 using Console = Colorful.Console;
 
 namespace TensorFlowNET.Examples
@@ -45,9 +46,10 @@ namespace TensorFlowNET.Examples
 
             Console.WriteLine(Environment.OSVersion, Color.Yellow);
             Console.WriteLine($"64Bit Operating System: {Environment.Is64BitOperatingSystem}", Color.Yellow);
-            Console.WriteLine($"TensorFlow.NET v{Assembly.GetAssembly(typeof(TF_DataType)).GetName().Version}", Color.Yellow);
-            Console.WriteLine($"TensorFlow Binary v{tf.VERSION}", Color.Yellow);
             Console.WriteLine($".NET CLR: {Environment.Version}", Color.Yellow);
+            Console.WriteLine($"TensorFlow Binary v{tf.VERSION}", Color.Yellow);
+            Console.WriteLine($"TensorFlow.NET v{Assembly.GetAssembly(typeof(TF_DataType)).GetName().Version}", Color.Yellow);
+            Console.WriteLine($"TensorFlow.Keras v{Assembly.GetAssembly(typeof(KerasApi)).GetName().Version}", Color.Yellow);
             Console.WriteLine(Environment.CurrentDirectory, Color.Yellow);
 
             while (true)
@@ -99,14 +101,16 @@ namespace TensorFlowNET.Examples
                 }
 
                 finished++;
+                keras.backend.clear_session();
                 Console.WriteLine($"{DateTime.UtcNow} Completed {example.Config.Name}", Color.White);
             }
 
             success.ForEach(x => Console.WriteLine($"{x} is OK!", Color.Green));
             errors.ForEach(x => Console.WriteLine($"{x} is Failed!", Color.Red));
 
-            Console.WriteLine($"TensorFlow.NET v{Assembly.GetAssembly(typeof(TF_DataType)).GetName().Version}");
             Console.WriteLine($"TensorFlow Binary v{tf.VERSION}");
+            Console.WriteLine($"TensorFlow.NET v{Assembly.GetAssembly(typeof(TF_DataType)).GetName().Version}");
+            Console.WriteLine($"TensorFlow.Keras v{Assembly.GetAssembly(typeof(KerasApi)).GetName().Version}");
             Console.WriteLine($"{finished} of {examples.Length} example(s) are completed.");
             Console.Write("Press [Enter] to continue...");
             Console.ReadLine();

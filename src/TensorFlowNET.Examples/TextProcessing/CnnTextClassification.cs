@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Tensorflow;
+using Tensorflow.Keras.Utils;
 using Tensorflow.Sessions;
 using TensorFlowNET.Examples.Text;
 using TensorFlowNET.Examples.Utility;

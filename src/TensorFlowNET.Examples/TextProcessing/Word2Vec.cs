@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Tensorflow;
+using Tensorflow.Keras.Utils;
 using TensorFlowNET.Examples.Utility;
 using static Tensorflow.Binding;
 
@@ -49,6 +50,8 @@ namespace TensorFlowNET.Examples
 
         public bool Run()
         {
+            tf.compat.v1.disable_eager_execution();
+
             PrepareData();
 
             var graph = tf.Graph().as_default();
