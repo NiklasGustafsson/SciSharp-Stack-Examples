@@ -15,36 +15,51 @@ Requirements:
 
 Run specific example in shell:
 
-```cs
-// run all examples from source code
+#### C#
+
+```bat
+:: run all examples from source code
 dotnet run --project src/TensorFlowNET.Examples
 
-// run specific example
-dotnet run --project src/TensorFlowNET.Examples -ex "Linear Regression"
+:: run specific example
+dotnet run --project src/TensorFlowNET.Examples -ex "Linear Regression (Graph)"
 
-// run in compiled library
+:: run in compiled library
 dotnet TensorFlowNET.Examples.dll -ex "MNIST CNN (Eager)"
 ```
 
+#### F#
+
+```bat
+:: run all examples from source code
+dotnet run --project src/TensorFlowNET.Examples.FSharp
+
+:: run specific example
+dotnet run --project src/TensorFlowNET.Examples.FSharp -ex "Linear Regression (Eager)"
+
+:: run in compiled library
+dotnet TensorFlowNET.Examples.FSharp.dll -ex "MNIST CNN (Eager)"
+```
 
 
 Example runner will download all the required files like training data and model pb files.
 
 #### Basic Model
 
-* Hello World [C#](src/TensorFlowNET.Examples/HelloWorld.cs)
-* Basic Operations [C#](src/TensorFlowNET.Examples/BasicOperations.cs)
-* Linear Regression in Graph mode [C#](src/TensorFlowNET.Examples/BasicModels/LinearRegression.cs) 
+* Hello World [C#](src/TensorFlowNET.Examples/HelloWorld.cs), [F#](src/TensorFlowNET.Examples.FSharp/HelloWorld.fs)
+* Basic Operations [C#](src/TensorFlowNET.Examples/BasicOperations.cs), [F#](src/TensorFlowNET.Examples.FSharp/BasicOperations.fs)
+* Linear Regression in Graph mode [C#](src/TensorFlowNET.Examples/BasicModels/LinearRegression.cs), [F#](src/TensorFlowNET.Examples.FSharp/BasicModels/LinearRegression.fs)
 * Linear Regression in Eager mode [C#](src/TensorFlowNET.Examples/BasicModels/LinearRegressionEager.cs), [F#](src/TensorFlowNET.Examples.FSharp/BasicModels/LinearRegressionEager.fs)
-* Logistic Regression in Graph mode [C#](src/TensorFlowNET.Examples/BasicModels/LogisticRegression.cs)
-* Logistic Regression in Eager mode [C#](src/TensorFlowNET.Examples/BasicModels/LogisticRegressionEager.cs) 
-* Nearest Neighbor [C#](src/TensorFlowNET.Examples/BasicModels/NearestNeighbor.cs)
-* Naive Bayes Classification [C#](src/TensorFlowNET.Examples/BasicModels/NaiveBayesClassifier.cs)
+* Logistic Regression in Graph mode [C#](src/TensorFlowNET.Examples/BasicModels/LogisticRegression.cs), [F#](src/TensorFlowNET.Examples.FSharp/BasicModels/LogisticRegression.fs)
+* Logistic Regression in Eager mode [C#](src/TensorFlowNET.Examples/BasicModels/LogisticRegressionEager.cs), [F#](src/TensorFlowNET.Examples.FSharp/BasicModels/LogisticRegressionEager.fs)
+* Nearest Neighbor [C#](src/TensorFlowNET.Examples/BasicModels/NearestNeighbor.cs), [F#](src/TensorFlowNET.Examples.FSharp/BasicModels/NearestNeighbor.fs)
+* Naive Bayes Classification [C#](src/TensorFlowNET.Examples/BasicModels/NaiveBayesClassifier.cs), [F#](src/TensorFlowNET.Examples.FSharp/BasicModels/NaiveBayesClassifier.fs)
 * K-means Clustering [C#](src/TensorFlowNET.Examples/BasicModels/KMeansClustering.cs)
 
 #### Neural Network
 
-* Full Connected Neural Network in Eager mode [C#](src/TensorFlowNET.Examples/\NeuralNetworks/FullyConnectedEager.cs) 
+* Full Connected Neural Network in Eager mode [C#](src/TensorFlowNET.Examples/NeuralNetworks/FullyConnectedEager.cs), [F#](src/TensorFlowNET.Examples.FSharp/NeuralNetworks/FullyConnectedEager.fs)
+* Full Connected Neural Network (Keras) [C#](src/TensorFlowNET.Examples/NeuralNetworks/FullyConnectedKeras.cs), [F#](src/TensorFlowNET.Examples.FSharp/NeuralNetworks/FullyConnectedKeras.fs)
 * NN XOR [C#](src/TensorFlowNET.Examples/NeuralNetworks/NeuralNetXor.cs)
 * Object Detection in MobileNet [C#](src/TensorFlowNET.Examples/ObjectDetection/DetectInMobilenet.cs) 
 * MNIST FNN in Keras Functional API [C#](src/TensorFlowNET.Examples/ImageProcessing/MnistFnnKerasFunctional.cs) 
