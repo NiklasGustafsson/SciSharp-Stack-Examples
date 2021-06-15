@@ -14,12 +14,9 @@
    limitations under the License.
 ******************************************************************************/
 
-using NumSharp;
-using System;
 using System.Diagnostics;
 using System.Linq;
 using Tensorflow;
-using Tensorflow.Hub;
 using Tensorflow.Operations;
 using static Tensorflow.Binding;
 
@@ -53,21 +50,23 @@ namespace TensorFlowNET.Examples
         Tensor X, Y;
         Tensor loss_op, accuracy, prediction;
         Operation train_op;
-        
+
         float accuracy_test = 0f;
         Session sess;
 
         public ExampleConfig InitConfig()
             => Config = new ExampleConfig
             {
-                Name = "MNIST LSTM",
-                Enabled = true,
+                Name = "MNIST LSTM (Graph)",
+                Enabled = false,
                 IsImportingGraph = false,
-                Priority = 11
+                Priority = 25
             };
 
         public bool Run()
         {
+            tf.compat.v1.disable_eager_execution();
+
             PrepareData();
             BuildGraph();
 
@@ -87,8 +86,8 @@ namespace TensorFlowNET.Examples
             Y = tf.placeholder(tf.float32, (-1, num_classes));
 
             // Hidden layer weights => 2*n_hidden because of forward + backward cells
-            var weights = tf.Variable(tf.random_normal((2 * num_hidden, num_classes)));
-            var biases = tf.Variable(tf.random_normal(num_classes));
+            var weights = tf.Variable(tf.random.normal((2 * num_hidden, num_classes)));
+            var biases = tf.Variable(tf.random.normal(num_classes));
 
             // Unstack to get a list of 'timesteps' tensors of shape (batch_size, num_input)
             var x = tf.unstack(X, timesteps, 1);

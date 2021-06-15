@@ -14,11 +14,7 @@
    limitations under the License.
 ******************************************************************************/
 
-using NumSharp;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using Tensorflow;
 using static Tensorflow.Binding;
 
@@ -67,7 +63,7 @@ namespace TensorFlowNET.Examples
         public override void PrepareData()
         {
             // batches of 128 samples, each containing 1024 data points
-            x_inputs_data = tf.random_normal(new[] { 128, 1024 }, mean: 0, stddev: 1);
+            x_inputs_data = tf.random.normal(new[] { 128, 1024 }, mean: 0, stddev: 1);
             // We will try to predict this law:
             // predict 1 if the sum of the elements is positive and 0 otherwise
             y_inputs_data = tf.cast(tf.reduce_sum(x_inputs_data, axis: 1, keepdims: true) > 0, tf.int32);
@@ -111,7 +107,7 @@ namespace TensorFlowNET.Examples
                 (x_input, y_input) = sess.run((x_inputs_data, y_inputs_data));
                 sess.run(accuracy, (input, x_input), (y_true, y_input));
             }
-                
+
             print($"Time taken: {sw.Elapsed.TotalSeconds}s");
         }
     }

@@ -21,8 +21,9 @@ using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using Tensorflow;
-using Console = Colorful.Console;
 using static Tensorflow.Binding;
+using static Tensorflow.KerasApi;
+using Console = Colorful.Console;
 
 namespace TensorFlowNET.Examples
 {
@@ -30,10 +31,6 @@ namespace TensorFlowNET.Examples
     {
         static void Main(string[] args)
         {
-            int finished = 0;
-            var errors = new List<string>();
-            var success = new List<string>();
-
             var parsedArgs = ParseArgs(args);
 
             var examples = Assembly.GetEntryAssembly().GetTypes()
@@ -47,25 +44,41 @@ namespace TensorFlowNET.Examples
             if (parsedArgs.ContainsKey("ex"))
                 examples = examples.Where(x => x.Config.Name == parsedArgs["ex"]).ToArray();
 
-            Console.WriteLine(Environment.OSVersion.ToString(), Color.Yellow);
+            Console.WriteLine(Environment.OSVersion, Color.Yellow);
+            Console.WriteLine($"64Bit Operating System: {Environment.Is64BitOperatingSystem}", Color.Yellow);
+            Console.WriteLine($".NET CLR: {Environment.Version}", Color.Yellow);
             Console.WriteLine($"TensorFlow Binary v{tf.VERSION}", Color.Yellow);
             Console.WriteLine($"TensorFlow.NET v{Assembly.GetAssembly(typeof(TF_DataType)).GetName().Version}", Color.Yellow);
+            Console.WriteLine($"TensorFlow.Keras v{Assembly.GetAssembly(typeof(KerasApi)).GetName().Version}", Color.Yellow);
+            Console.WriteLine(Environment.CurrentDirectory, Color.Yellow);
 
-            for (var i = 0; i < examples.Length; i++)
-                Console.WriteLine($"[{i}]: {examples[i].Config.Name}");
-
-            var key = "0";
-            
-            if (examples.Length > 1)
+            while (true)
             {
-                Console.Write($"Choose one example to run, hit [Enter] to run all: ", Color.Yellow);
-                key = Console.ReadLine();
+                for (var i = 0; i < examples.Length; i++)
+                    Console.WriteLine($"[{i + 1}]: {examples[i].Config.Name}");
+
+                var key = "1";
+
+                if (examples.Length > 1)
+                {
+                    Console.Write($"Choose one example to run, hit [Enter] to run all: ", Color.Yellow);
+                    key = Console.ReadLine();
+                }
+
+                RunExamples(key, examples);
             }
+        }
+
+        private static void RunExamples(string key, IExample[] examples)
+        {
+            int finished = 0;
+            var errors = new List<string>();
+            var success = new List<string>();
 
             var sw = new Stopwatch();
             for (var i = 0; i < examples.Length; i++)
             {
-                if (i.ToString() != key && key != "") continue;
+                if ((i + 1).ToString() != key && key != "") continue;
 
                 var example = examples[i];
                 Console.WriteLine($"{DateTime.UtcNow} Starting {example.Config.Name}", Color.White);
@@ -88,13 +101,19 @@ namespace TensorFlowNET.Examples
                 }
 
                 finished++;
+                keras.backend.clear_session();
+                
                 Console.WriteLine($"{DateTime.UtcNow} Completed {example.Config.Name}", Color.White);
             }
 
             success.ForEach(x => Console.WriteLine($"{x} is OK!", Color.Green));
             errors.ForEach(x => Console.WriteLine($"{x} is Failed!", Color.Red));
 
+            Console.WriteLine($"TensorFlow Binary v{tf.VERSION}");
+            Console.WriteLine($"TensorFlow.NET v{Assembly.GetAssembly(typeof(TF_DataType)).GetName().Version}");
+            Console.WriteLine($"TensorFlow.Keras v{Assembly.GetAssembly(typeof(KerasApi)).GetName().Version}");
             Console.WriteLine($"{finished} of {examples.Length} example(s) are completed.");
+            Console.Write("Press [Enter] to continue...");
             Console.ReadLine();
         }
 

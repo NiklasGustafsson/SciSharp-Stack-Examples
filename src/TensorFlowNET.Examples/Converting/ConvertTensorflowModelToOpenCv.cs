@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Google.Protobuf;
 using System.IO;
-using System.Text;
 using Tensorflow;
-using TensorFlowNET.Examples.Utility;
+using Tensorflow.Keras.Utils;
 using static Tensorflow.Binding;
-using Google.Protobuf;
 
 namespace TensorFlowNET.Examples
 {
@@ -24,12 +21,14 @@ namespace TensorFlowNET.Examples
             => Config = new ExampleConfig
             {
                 Name = "Convert TensorFlow Model to OpenCv",
-                Enabled = true,
+                Enabled = false,
                 IsImportingGraph = false
             };
 
         public bool Run()
         {
+            tf.compat.v1.disable_eager_execution();
+
             PrepareData();
 
             BuildGraph();
@@ -89,7 +88,7 @@ namespace TensorFlowNET.Examples
                 {
 
                 }
-                else if(node.Name.StartsWith("fc") || node.Name.StartsWith("logits"))
+                else if (node.Name.StartsWith("fc") || node.Name.StartsWith("logits"))
                 {
 
                 }
@@ -119,7 +118,7 @@ namespace TensorFlowNET.Examples
                 {
                     continue;
                 }
-                
+
                 if (node.Name == "fc2/fc2/batch_norm/batchnorm/mul_1")
                 {
                     modified_node.Input[0] = "mul";

@@ -15,9 +15,7 @@
 ******************************************************************************/
 
 using NumSharp;
-using System;
 using Tensorflow;
-using Tensorflow.Hub;
 using static Tensorflow.Binding;
 
 namespace TensorFlowNET.Examples
@@ -46,6 +44,7 @@ namespace TensorFlowNET.Examples
 
         public bool Run()
         {
+            tf.compat.v1.disable_eager_execution();
             // tf Graph Input
             var xtr = tf.placeholder(tf.float32, new TensorShape(-1, 784));
             var xte = tf.placeholder(tf.float32, new TensorShape(784));
@@ -66,7 +65,7 @@ namespace TensorFlowNET.Examples
 
                 PrepareData();
 
-                foreach(int i in range(Xte.shape[0]))
+                foreach (int i in range(Xte.shape[0]))
                 {
                     // Get nearest neighbor
                     long nn_index = sess.run(pred, (xtr, Xtr), (xte, Xte[i]));
@@ -78,7 +77,7 @@ namespace TensorFlowNET.Examples
 
                     // Calculate accuracy
                     if (np.argmax(Ytr[index]) == np.argmax(Yte[i]))
-                        accuracy += 1f/ Xte.shape[0];
+                        accuracy += 1f / Xte.shape[0];
                 }
 
                 print($"Accuracy: {accuracy}");

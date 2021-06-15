@@ -1,10 +1,9 @@
 ﻿using NumSharp;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Tensorflow;
-using TensorFlowNET.Examples.Utility;
+using Tensorflow.Keras.Utils;
 using static Tensorflow.Binding;
 
 namespace TensorFlowNET.Examples
@@ -16,7 +15,6 @@ namespace TensorFlowNET.Examples
     public class Word2Vec : SciSharpExample, IExample
     {
         // Training Parameters
-        float learning_rate = 0.1f;
         int batch_size = 128;
         int num_steps = 30000; //3000000;
         int display_step = 1000; //10000;
@@ -29,12 +27,9 @@ namespace TensorFlowNET.Examples
         int[] data;
 
         // Word2Vec Parameters
-        int embedding_size = 200; // Dimension of the embedding vector
-        int max_vocabulary_size = 50000; // Total number of different words in the vocabulary
         int min_occurrence = 10; // Remove all words that does not appears at least n times
         int skip_window = 3; // How many words to consider left and right
         int num_skips = 2; // How many times to reuse an input to generate a label
-        int num_sampled = 64; // Number of negative examples to sample
 
         int data_index = 0;
         int top_k = 8; // number of nearest neighbors
@@ -50,6 +45,8 @@ namespace TensorFlowNET.Examples
 
         public bool Run()
         {
+            tf.compat.v1.disable_eager_execution();
+
             PrepareData();
 
             var graph = tf.Graph().as_default();
@@ -102,7 +99,7 @@ namespace TensorFlowNET.Examples
                     {
                         print("Evaluation...");
                         var sim = sess.run(cosine_sim_op, (X, x_test));
-                        foreach(var i in range(len(eval_words)))
+                        foreach (var i in range(len(eval_words)))
                         {
                             var nearest = (0f - sim[i]).argsort<float>()
                                 .Data<int>()
@@ -138,7 +135,7 @@ namespace TensorFlowNET.Examples
             {
                 var context_words = range(span).Where(x => x != skip_window).ToArray();
                 var words_to_use = new int[] { 1, 6 };
-                foreach(var (j, context_word) in enumerate(words_to_use))
+                foreach (var (j, context_word) in enumerate(words_to_use))
                 {
                     batch[i * num_skips + j] = buffer.ElementAt(skip_window);
                     labels[i * num_skips + j, 0] = buffer.ElementAt(context_word);
@@ -195,9 +192,9 @@ namespace TensorFlowNET.Examples
 
             // Retrieve a word id, or assign it index 0 ('UNK') if not in dictionary
             data = (from word in text_words
-                        join id in word2id on word equals id.Word into wi
-                        from wi2 in wi.DefaultIfEmpty()
-                        select wi2 == null ? 0 : wi2.Id).ToArray();
+                    join id in word2id on word equals id.Word into wi
+                    from wi2 in wi.DefaultIfEmpty()
+                    select wi2 == null ? 0 : wi2.Id).ToArray();
 
             word2id.Insert(0, new WordId { Word = "UNK", Id = 0, Occurrence = data.Count(x => x == 0) });
 

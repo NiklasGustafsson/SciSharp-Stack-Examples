@@ -1,12 +1,12 @@
 ﻿using NumSharp;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using Console = Colorful.Console;
-using Tensorflow;
 using System.Drawing;
+using System.IO;
+using Tensorflow;
+using Tensorflow.Keras.Utils;
 using static Tensorflow.Binding;
+using Console = Colorful.Console;
 
 namespace TensorFlowNET.Examples
 {
@@ -32,8 +32,10 @@ namespace TensorFlowNET.Examples
 
         public bool Run()
         {
+            tf.compat.v1.disable_eager_execution();
+
             PrepareData();
-           
+
             var graph = new Graph();
             //import GraphDef from pb file
             graph.Import(Path.Join(dir, pbFile));
@@ -62,7 +64,7 @@ namespace TensorFlowNET.Examples
                     result_labels.Add(labels[idx]);
                 }
             }
-            
+
             return result_labels.Contains("military uniform");
         }
 
@@ -74,7 +76,7 @@ namespace TensorFlowNET.Examples
         {
             var graph = tf.Graph().as_default();
 
-            var file_reader = tf.read_file(file_name, "file_reader");
+            var file_reader = tf.io.read_file(file_name, "file_reader");
             var decodeJpeg = tf.image.decode_jpeg(file_reader, channels: 3, name: "DecodeJpeg");
             var cast = tf.cast(decodeJpeg, tf.float32);
             var dims_expander = tf.expand_dims(cast, 0);
@@ -94,17 +96,17 @@ namespace TensorFlowNET.Examples
             // get model file
             string url = "https://storage.googleapis.com/download.tensorflow.org/models/inception5h.zip";
 
-            Utility.Web.Download(url, dir, "inception5h.zip");
+            Web.Download(url, dir, "inception5h.zip");
 
-            Utility.Compress.UnZip(Path.Join(dir, "inception5h.zip"), dir);
+            Compress.UnZip(Path.Join(dir, "inception5h.zip"), dir);
 
             // download sample picture
             Directory.CreateDirectory(Path.Join(dir, "img"));
             url = $"https://raw.githubusercontent.com/tensorflow/tensorflow/master/tensorflow/examples/label_image/data/grace_hopper.jpg";
-            Utility.Web.Download(url, Path.Join(dir, "img"), "grace_hopper.jpg");
+            Web.Download(url, Path.Join(dir, "img"), "grace_hopper.jpg");
 
             url = $"https://raw.githubusercontent.com/SciSharp/TensorFlow.NET/master/data/shasta-daisy.jpg";
-            Utility.Web.Download(url, Path.Join(dir, "img"), "shasta-daisy.jpg");
+            Web.Download(url, Path.Join(dir, "img"), "shasta-daisy.jpg");
 
             // load image file
             var files = Directory.GetFiles(Path.Join(dir, "img"));

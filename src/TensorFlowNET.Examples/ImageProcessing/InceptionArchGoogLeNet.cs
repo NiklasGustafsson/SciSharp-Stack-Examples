@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Tensorflow;
+using Tensorflow.Keras.Utils;
 using static Tensorflow.Binding;
 
 namespace TensorFlowNET.Examples
@@ -37,7 +38,7 @@ namespace TensorFlowNET.Examples
             PrepareData();
 
             var labels = File.ReadAllLines(Path.Join(dir, labelFile));
-            
+
             var nd = ReadTensorFromImageFile(Path.Join(dir, picFile),
                 input_height: input_height,
                 input_width: input_width,
@@ -78,7 +79,7 @@ namespace TensorFlowNET.Examples
         {
             var graph = tf.Graph().as_default();
 
-            var file_reader = tf.read_file(file_name, "file_reader");
+            var file_reader = tf.io.read_file(file_name, "file_reader");
             var image_reader = tf.image.decode_jpeg(file_reader, channels: 3, name: "jpeg_reader");
             var caster = tf.cast(image_reader, tf.float32);
             var dims_expander = tf.expand_dims(caster, 0);
@@ -97,15 +98,15 @@ namespace TensorFlowNET.Examples
 
             // get model file
             string url = "https://storage.googleapis.com/download.tensorflow.org/models/inception_v3_2016_08_28_frozen.pb.tar.gz";
-            
-            Utility.Web.Download(url, dir, $"{pbFile}.tar.gz");
 
-            Utility.Compress.ExtractTGZ(Path.Join(dir, $"{pbFile}.tar.gz"), dir);
+            Web.Download(url, dir, $"{pbFile}.tar.gz");
+
+            Compress.ExtractTGZ(Path.Join(dir, $"{pbFile}.tar.gz"), dir);
 
             // download sample picture
             string pic = "grace_hopper.jpg";
             url = $"https://raw.githubusercontent.com/tensorflow/tensorflow/master/tensorflow/examples/label_image/data/{pic}";
-            Utility.Web.Download(url, dir, pic);
+            Web.Download(url, dir, pic);
         }
     }
 }

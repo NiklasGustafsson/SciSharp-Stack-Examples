@@ -14,11 +14,7 @@
    limitations under the License.
 ******************************************************************************/
 
-using NumSharp;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using Tensorflow;
 using static Tensorflow.Binding;
 
@@ -41,18 +37,18 @@ namespace TensorFlowNET.Examples
         public ExampleConfig InitConfig()
             => Config = new ExampleConfig
             {
-                Name = "Fully Connected Neural Network",
-                Enabled = true,
+                Name = "Fully Connected Neural Network (Graph)",
+                Enabled = false,
                 IsImportingGraph = false,
-                Priority = 13
+                Priority = 10
             };
 
         public override Graph BuildGraph()
         {
             var g = tf.get_default_graph();
-            
+
             Tensor z = null;
-            
+
             tf_with(tf.variable_scope("placeholder"), delegate
             {
                 input = tf.placeholder(tf.float32, shape: (-1, 1024));
@@ -61,14 +57,14 @@ namespace TensorFlowNET.Examples
 
             tf_with(tf.variable_scope("FullyConnected"), delegate
             {
-                var w = tf.get_variable("w", shape: (1024, 1024), initializer: tf.random_normal_initializer(stddev: 0.1f));
-                var b = tf.get_variable("b", shape: 1024, initializer: tf.constant_initializer(0.1));
-                z = tf.matmul(input, w) + b;
+                var w = tf.compat.v1.get_variable("w", shape: (1024, 1024), initializer: tf.random_normal_initializer(stddev: 0.1f));
+                var b = tf.compat.v1.get_variable("b", shape: 1024, initializer: tf.constant_initializer(0.1));
+                z = tf.matmul(input, w.AsTensor()) + b.AsTensor();
                 var y = tf.nn.relu(z);
 
-                var w2 = tf.get_variable("w2", shape: (1024, 1), initializer: tf.random_normal_initializer(stddev: 0.1f));
-                var b2 = tf.get_variable("b2", shape: 1, initializer: tf.constant_initializer(0.1));
-                z = tf.matmul(y, w2) + b2;
+                var w2 = tf.compat.v1.get_variable("w2", shape: (1024, 1), initializer: tf.random_normal_initializer(stddev: 0.1f));
+                var b2 = tf.compat.v1.get_variable("b2", shape: 1, initializer: tf.constant_initializer(0.1));
+                z = tf.matmul(y, w2.AsTensor()) + b2.AsTensor();
             });
 
             tf_with(tf.variable_scope("Loss"), delegate
@@ -94,7 +90,7 @@ namespace TensorFlowNET.Examples
         public override void PrepareData()
         {
             // batches of 128 samples, each containing 1024 data points
-            x_inputs_data = tf.random_normal(new[] { 128, 1024 }, mean: 0, stddev: 1);
+            x_inputs_data = tf.random.normal(new[] { 128, 1024 }, mean: 0, stddev: 1);
             // We will try to predict this law:
             // predict 1 if the sum of the elements is positive and 0 otherwise
             y_inputs_data = tf.cast(tf.reduce_sum(x_inputs_data, axis: 1, keepdims: true) > 0, tf.int32);
@@ -102,8 +98,9 @@ namespace TensorFlowNET.Examples
 
         public bool Run()
         {
-            PrepareData();
+            tf.compat.v1.disable_eager_execution();
 
+            PrepareData();
             BuildGraph();
             Train();
 

@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using NumSharp;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using Tensorflow;
 using System.Linq;
-using NumSharp;
-using Newtonsoft.Json;
+using Tensorflow.Keras.Utils;
+using static Tensorflow.KerasApi;
 
 namespace TensorFlowNET.Examples
 {
@@ -36,7 +37,7 @@ namespace TensorFlowNET.Examples
 
             // A dictionary mapping words to an integer index
             var word_index = GetWordIndex();
-            
+
             /*train_data = keras.preprocessing.sequence.pad_sequences(train_data,
                 value: word_index["<PAD>"],
                 padding: "post",
@@ -47,12 +48,9 @@ namespace TensorFlowNET.Examples
                 padding: "post",
                 maxlen: 256);*/
 
-            // input shape is the vocabulary count used for the movie reviews (10,000 words)
-            int vocab_size = 10000;
-
-            var model = keras.Sequential();
-            var layer = keras.layers.Embedding(vocab_size, 16);
-            model.add(layer);
+            /*var model =*/ keras.Sequential();
+            //var layer = tf.keras.layers.Embedding(vocab_size, 16);
+            //model.add(layer);
 
             return false;
         }
@@ -64,8 +62,8 @@ namespace TensorFlowNET.Examples
             // get model file
             string url = $"https://github.com/SciSharp/TensorFlow.NET/raw/master/data/{dataFile}";
 
-            Utility.Web.Download(url, dir, "imdb.zip");
-            Utility.Compress.UnZip(Path.Join(dir, $"imdb.zip"), dir);
+            Web.Download(url, dir, "imdb.zip");
+            Compress.UnZip(Path.Join(dir, $"imdb.zip"), dir);
 
             // prepare training dataset
             var x_train = ReadData(Path.Join(dir, "x_train.txt"));

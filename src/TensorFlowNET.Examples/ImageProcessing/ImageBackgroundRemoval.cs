@@ -1,7 +1,6 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Tensorflow;
-using TensorFlowNET.Examples.Utility;
+using Tensorflow.Keras.Utils;
 using static Tensorflow.Binding;
 
 namespace TensorFlowNET.Examples

@@ -14,17 +14,16 @@
    limitations under the License.
 ******************************************************************************/
 
+using NumSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Google.Protobuf;
-using NumSharp;
 using Tensorflow;
+using Tensorflow.Keras.Utils;
 using Tensorflow.Sessions;
 using TensorFlowNET.Examples.Text;
-using TensorFlowNET.Examples.Utility;
 using static Tensorflow.Binding;
 
 namespace TensorFlowNET.Examples
@@ -37,17 +36,15 @@ namespace TensorFlowNET.Examples
         public int? DataLimit = null;
 
         const string dataDir = "cnn_text";
-        string dataFileName = "dbpedia_csv.tar.gz";
 
         string TRAIN_PATH = $"{dataDir}/dbpedia_csv/train.csv";
-        string TEST_PATH = $"{dataDir}/dbpedia_csv/test.csv";
-        
+
         int NUM_CLASS = 14;
         int BATCH_SIZE = 64;
         int NUM_EPOCHS = 10;
         int WORD_MAX_LEN = 100;
         int CHAR_MAX_LEN = 1014;
-        
+
         float loss_value = 0;
         double max_accuracy = 0;
 
@@ -61,13 +58,15 @@ namespace TensorFlowNET.Examples
         public ExampleConfig InitConfig()
             => Config = new ExampleConfig
             {
-                Name = "CNN Text Classification",
+                Name = "CNN Text Classification (Graph)",
                 Enabled = true,
                 IsImportingGraph = false
             };
 
         public bool Run()
         {
+            tf.compat.v1.disable_eager_execution();
+
             PrepareData();
             Predict();
             Test();
@@ -141,7 +140,7 @@ namespace TensorFlowNET.Examples
             Console.WriteLine("Building dataset...");
             var (x, y) = (new int[0][], new int[0]);
 
-            if(ModelName == "char_cnn")
+            if (ModelName == "char_cnn")
             {
                 (x, y, alphabet_size) = DataHelpers.build_char_dataset(TRAIN_PATH, "char_cnn", CHAR_MAX_LEN);
             }
@@ -170,7 +169,7 @@ namespace TensorFlowNET.Examples
             {
                 // delete old cached file which contains errors
                 Console.WriteLine("Discarding cached file: " + meta_path);
-                if(File.Exists(meta_path))
+                if (File.Exists(meta_path))
                     File.Delete(meta_path);
             }
             var url = "https://raw.githubusercontent.com/SciSharp/TensorFlow.NET/master/graph/" + meta_file;
@@ -183,7 +182,7 @@ namespace TensorFlowNET.Examples
             return graph;
         }
 
-        public Graph BuildGraph()
+        public override Graph BuildGraph()
         {
             var graph = tf.Graph().as_default();
 

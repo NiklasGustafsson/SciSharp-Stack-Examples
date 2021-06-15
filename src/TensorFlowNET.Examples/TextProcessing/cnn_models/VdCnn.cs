@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Tensorflow;
 using static Tensorflow.Binding;
+using static Tensorflow.KerasApi;
 
 namespace TensorFlowNET.Examples.Text
 {
@@ -17,8 +17,8 @@ namespace TensorFlowNET.Examples.Text
         public Tensor x { get; private set; }
         public Tensor y { get; private set; }
         public Tensor is_training { get; private set; }
-        private RefVariable global_step;
-        private RefVariable embeddings;
+        private IVariableV1 global_step;
+        private IVariableV1 embeddings;
         private Tensor x_emb;
         private Tensor x_expanded;
         private Tensor logits;
@@ -32,7 +32,7 @@ namespace TensorFlowNET.Examples.Text
             num_filters = new int[] { 64, 64, 128, 256, 512 };
             num_blocks = new int[] { 2, 2, 2, 2 };
             learning_rate = 0.001f;
-            cnn_initializer = tensorflow.keras.initializers.he_normal();
+            cnn_initializer = keras.initializers.he_normal();
             fc_initializer = tf.truncated_normal_initializer(stddev: 0.05f);
 
             x = tf.placeholder(tf.int32, new TensorShape(-1, document_max_len), name: "x");
@@ -44,7 +44,7 @@ namespace TensorFlowNET.Examples.Text
             tf_with(tf.name_scope("embedding"), delegate
             {
                 var init_embeddings = tf.random_uniform(new int[] { alphabet_size, embedding_size }, -1.0f, 1.0f);
-                embeddings = tf.get_variable("embeddings", initializer: init_embeddings);
+                embeddings = tf.compat.v1.get_variable("embeddings", initializer: init_embeddings);
                 x_emb = tf.nn.embedding_lookup(embeddings, x);
                 x_expanded = tf.expand_dims(x_emb, -1);
             });
@@ -55,30 +55,32 @@ namespace TensorFlowNET.Examples.Text
             Tensor conv3 = null;
             Tensor conv4 = null;
             Tensor h_flat = null;
-            Tensor fc1_out = null;
             Tensor fc2_out = null;
 
             // First Convolution Layer
             tf_with(tf.variable_scope("conv-0"), delegate
             {
-                conv0 = tf.layers.conv2d(x_expanded,
+                conv0 = keras.layers.Conv2D(
                     filters: num_filters[0],
                     kernel_size: new int[] { filter_sizes[0], embedding_size },
                     kernel_initializer: cnn_initializer,
-                    activation: tf.nn.relu());
+                    activation: tf.nn.relu).Apply(x_expanded);
 
                 conv0 = tf.transpose(conv0, new int[] { 0, 1, 3, 2 });
             });
 
-            tf_with(tf.name_scope("conv-block-1"), delegate {
+            tf_with(tf.name_scope("conv-block-1"), delegate
+            {
                 conv1 = conv_block(conv0, 1);
             });
 
-            tf_with(tf.name_scope("conv-block-2"), delegate {
+            tf_with(tf.name_scope("conv-block-2"), delegate
+            {
                 conv2 = conv_block(conv1, 2);
             });
 
-            tf_with(tf.name_scope("conv-block-3"), delegate {
+            tf_with(tf.name_scope("conv-block-3"), delegate
+            {
                 conv3 = conv_block(conv2, 3);
             });
 
@@ -98,17 +100,17 @@ namespace TensorFlowNET.Examples.Text
             // ============= Fully Connected Layers =============
             tf_with(tf.name_scope("fc-1"), scope =>
             {
-                fc1_out = tf.layers.dense(h_flat, 2048, activation: tf.nn.relu(), kernel_initializer: fc_initializer);
+                //fc1_out = tf.layers.dense(h_flat, 2048, activation: tf.nn.relu(), kernel_initializer: fc_initializer);
             });
 
             tf_with(tf.name_scope("fc-2"), scope =>
             {
-                fc2_out = tf.layers.dense(fc1_out, 2048, activation: tf.nn.relu(), kernel_initializer: fc_initializer);
+                //fc2_out = tf.layers.dense(fc1_out, 2048, activation: tf.nn.relu(), kernel_initializer: fc_initializer);
             });
 
             tf_with(tf.name_scope("fc-3"), scope =>
             {
-                logits = tf.layers.dense(fc2_out, num_class, activation: null, kernel_initializer: fc_initializer);
+                logits = keras.layers.dense(fc2_out, num_class, activation: null, kernel_initializer: fc_initializer);
                 predictions = tf.argmax(logits, -1, output_type: tf.int32);
             });
 
@@ -138,24 +140,23 @@ namespace TensorFlowNET.Examples.Text
                     tf_with(tf.variable_scope($"conv-{j}"), delegate
                     {
                         // convolution
-                        conv = tf.layers.conv2d(
-                            input,
+                        conv = keras.layers.Conv2D(
                             filters: num_filters[i],
                             kernel_size: new int[] { filter_sizes[i], num_filters[i - 1] },
                             kernel_initializer: cnn_initializer,
-                            activation: null);
+                            activation: null).Apply(input);
                         // batch normalization
-                        conv = tf.layers.batch_normalization(conv, training: is_training);
+                        conv = keras.layers.BatchNormalization().Apply(conv);
                         // relu
                         conv = tf.nn.relu(conv);
                         conv = tf.transpose(conv, new int[] { 0, 1, 3, 2 });
                     });
                 }
-                
+
                 if (max_pool)
                 {
                     // Max pooling
-                    return tf.layers.max_pooling2d(
+                    return keras.layers.max_pooling2d(
                         conv,
                         pool_size: new int[] { 3, 1 },
                         strides: new int[] { 2, 1 },

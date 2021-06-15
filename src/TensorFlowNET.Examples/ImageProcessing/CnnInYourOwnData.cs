@@ -16,21 +16,19 @@
 
 
 using NumSharp;
-using NumSharp.Backends;
-using NumSharp.Backends.Unmanaged;
 using SharpCV;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using Tensorflow;
-using static Tensorflow.Binding;
-using static SharpCV.Binding;
-using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using Tensorflow;
+using Tensorflow.Keras.Utils;
+using static SharpCV.Binding;
+using static Tensorflow.Binding;
 
 namespace TensorFlowNET.Examples
 {
@@ -44,12 +42,10 @@ namespace TensorFlowNET.Examples
     /// </summary>
     class CnnInYourOwnData : SciSharpExample, IExample
     {
-        string logs_path = "logs";
-
         string[] ArrayFileName_Train, ArrayFileName_Validation, ArrayFileName_Test;
-        Int64[] ArrayLabel_Train, ArrayLabel_Validation, ArrayLabel_Test;
-        Dictionary<Int64, string> Dict_Label;
-        NDArray x_train, y_train;
+        long[] ArrayLabel_Train, ArrayLabel_Validation, ArrayLabel_Test;
+        Dictionary<long, string> Dict_Label;
+        NDArray y_train;
         NDArray x_valid, y_valid;
         NDArray x_test, y_test;
         int img_h = 64;// MNIST images are 64x64
@@ -93,8 +89,8 @@ namespace TensorFlowNET.Examples
 
         NDArray Test_Cls, Test_Data;
 
-        RefVariable gloabl_steps;
-        RefVariable learning_rate;
+        IVariableV1 gloabl_steps;
+        IVariableV1 learning_rate;
 
         bool SaverBest = true;
         double max_accuracy = 0;
@@ -106,14 +102,16 @@ namespace TensorFlowNET.Examples
         public ExampleConfig InitConfig()
             => Config = new ExampleConfig
             {
-                Name = "CnnInYourOwnData",
+                Name = "CNN in Your Own Data (Graph)",
                 Enabled = true,
                 IsImportingGraph = false,
-                Priority = 12
+                Priority = 19
             };
 
         public bool Run()
         {
+            tf.compat.v1.disable_eager_execution();
+
             PrepareData();
             BuildGraph();
 
@@ -133,8 +131,8 @@ namespace TensorFlowNET.Examples
         {
             string url = "https://github.com/SciSharp/SciSharp-Stack-Examples/raw/master/data/data_CnnInYourOwnData.zip";
             Directory.CreateDirectory(Config.Name);
-            Utility.Web.Download(url, Config.Name, "data_CnnInYourOwnData.zip");
-            Utility.Compress.UnZip(Config.Name + "\\data_CnnInYourOwnData.zip", Config.Name);
+            Web.Download(url, Config.Name, "data_CnnInYourOwnData.zip");
+            Compress.UnZip(Config.Name + "\\data_CnnInYourOwnData.zip", Config.Name);
 
             FillDictionaryLabel(Config.Name + "\\train");
 
@@ -160,8 +158,8 @@ namespace TensorFlowNET.Examples
         private void LoadImagesToNDArray()
         {
             //Load labels
-            y_valid = np.eye(Dict_Label.Count)[new NDArray(ArrayLabel_Validation)];
-            y_test = np.eye(Dict_Label.Count)[new NDArray(ArrayLabel_Test)];
+            y_valid = np.eye(Dict_Label.Count)[np.array(ArrayLabel_Validation)];
+            y_test = np.eye(Dict_Label.Count)[np.array(ArrayLabel_Test)];
             print("Load Labels To NDArray : OK!");
 
             //Load Images
@@ -188,7 +186,7 @@ namespace TensorFlowNET.Examples
 
         private NDArray ReadTensorFromImageFile(string file_name, Graph graph)
         {
-            var file_reader = tf.read_file(file_name, "file_reader");
+            var file_reader = tf.io.read_file(file_name, "file_reader");
             var decodeJpeg = tf.image.decode_jpeg(file_reader, channels: n_channels, name: "DecodeJpeg");
             var cast = tf.cast(decodeJpeg, tf.float32);
             var dims_expander = tf.expand_dims(cast, 0);
@@ -210,11 +208,11 @@ namespace TensorFlowNET.Examples
         /// <param name="images"></param>
         /// <param name="labels"></param>
         /// <returns></returns>
-        public (string[], Int64[]) ShuffleArray(int count, string[] images, Int64[] labels)
+        public (string[], long[]) ShuffleArray(int count, string[] images, long[] labels)
         {
             ArrayList mylist = new ArrayList();
             string[] new_images = new string[count];
-            Int64[] new_labels = new Int64[count];
+            long[] new_labels = new long[count];
             Random r = new Random();
             for (int i = 0; i < count; i++)
             {
@@ -237,9 +235,9 @@ namespace TensorFlowNET.Examples
         /// </summary>
         /// <param name="FilesArray"></param>
         /// <returns></returns>
-        private Int64[] GetLabelArray(string[] FilesArray)
+        private long[] GetLabelArray(string[] FilesArray)
         {
-            Int64[] ArrayLabel = new Int64[FilesArray.Length];
+            var ArrayLabel = new long[FilesArray.Length];
             for (int i = 0; i < ArrayLabel.Length; i++)
             {
                 string[] labels = FilesArray[i].Split('\\');
@@ -304,7 +302,7 @@ namespace TensorFlowNET.Examples
             //create train images graph
             tf_with(tf.variable_scope("LoadImage"), delegate
             {
-                decodeJpeg = tf.placeholder(tf.@byte, name: "DecodeJpeg");
+                decodeJpeg = tf.placeholder(tf.byte8, name: "DecodeJpeg");
                 var cast = tf.cast(decodeJpeg, tf.float32);
                 var dims_expander = tf.expand_dims(cast, 0);
                 var resize = tf.constant(new int[] { img_h, img_w });
@@ -353,7 +351,6 @@ namespace TensorFlowNET.Examples
         {
             return tf_with(tf.variable_scope(name), delegate
             {
-
                 var num_in_channel = x.shape[x.NDims - 1];
                 var shape = new[] { filter_size, filter_size, num_in_channel, num_filters };
                 var W = weight_variable("W", shape);
@@ -361,9 +358,9 @@ namespace TensorFlowNET.Examples
                 var b = bias_variable("b", new[] { num_filters });
                 // tf.summary.histogram("bias", b);
                 var layer = tf.nn.conv2d(x, W,
-                                     strides: new[] { 1, stride, stride, 1 },
+                                     strides: new int[] { 1, stride, stride, 1 },
                                      padding: "SAME");
-                layer += b;
+                layer += b.AsTensor();
                 return tf.nn.relu(layer);
             });
         }
@@ -408,10 +405,10 @@ namespace TensorFlowNET.Examples
         /// <param name="name"></param>
         /// <param name="shape"></param>
         /// <returns></returns>
-        private RefVariable weight_variable(string name, int[] shape)
+        private IVariableV1 weight_variable(string name, int[] shape)
         {
             var initer = tf.truncated_normal_initializer(stddev: 0.01f);
-            return tf.get_variable(name,
+            return tf.compat.v1.get_variable(name,
                                    dtype: tf.float32,
                                    shape: shape,
                                    initializer: initer);
@@ -423,10 +420,10 @@ namespace TensorFlowNET.Examples
         /// <param name="name"></param>
         /// <param name="shape"></param>
         /// <returns></returns>
-        private RefVariable bias_variable(string name, int[] shape)
+        private IVariableV1 bias_variable(string name, int[] shape)
         {
             var initial = tf.constant(0f, shape: shape, dtype: tf.float32);
-            return tf.get_variable(name,
+            return tf.compat.v1.get_variable(name,
                            dtype: tf.float32,
                            initializer: initial);
         }
@@ -448,7 +445,7 @@ namespace TensorFlowNET.Examples
                 var W = weight_variable("W_" + name, shape: new[] { in_dim, num_units });
                 var b = bias_variable("b_" + name, new[] { num_units });
 
-                var layer = tf.matmul(x, W) + b;
+                var layer = tf.matmul(x, W.AsTensor()) + b.AsTensor();
                 if (use_relu)
                     layer = tf.nn.relu(layer);
 
@@ -547,7 +544,7 @@ namespace TensorFlowNET.Examples
             Write_Dictionary(path_model + "\\dic.txt", Dict_Label);
         }
 
-        private void Write_Dictionary(string path, Dictionary<Int64, string> mydic)
+        void Write_Dictionary(string path, Dictionary<Int64, string> mydic)
         {
             FileStream fs = new FileStream(path, FileMode.Create);
             StreamWriter sw = new StreamWriter(fs);
@@ -558,14 +555,14 @@ namespace TensorFlowNET.Examples
             print("Write_Dictionary");
         }
 
-        private (NDArray, NDArray) Randomize(NDArray x, NDArray y)
+        (NDArray, NDArray) Randomize(NDArray x, NDArray y)
         {
             var perm = np.random.permutation(y.shape[0]);
             np.random.shuffle(perm);
             return (x[perm], y[perm]);
         }
 
-        private (NDArray, NDArray) GetNextBatch(NDArray x, NDArray y, int start, int end)
+        (NDArray, NDArray) GetNextBatch(NDArray x, NDArray y, int start, int end)
         {
             var slice = new Slice(start, end);
             var x_batch = x[slice];
@@ -573,7 +570,7 @@ namespace TensorFlowNET.Examples
             return (x_batch, y_batch);
         }
 
-        private unsafe (NDArray, NDArray) GetNextBatch(Session sess, string[] x, NDArray y, int start, int end)
+        (NDArray, NDArray) GetNextBatch(Session sess, string[] x, NDArray y, int start, int end)
         {
             NDArray x_batch = np.zeros(end - start, img_h, img_w, n_channels);
             int n = 0;
@@ -600,12 +597,12 @@ namespace TensorFlowNET.Examples
             (Test_Cls, Test_Data) = sess.run((cls_prediction, prob), (x, x_test));
         }
 
-        private void TestDataOutput()
+        void TestDataOutput()
         {
             for (int i = 0; i < ArrayLabel_Test.Length; i++)
             {
-                Int64 real = ArrayLabel_Test[i];
-                int predict = (int)(Test_Cls[i]);
+                long real = ArrayLabel_Test[i];
+                int predict = Test_Cls[i];
                 var probability = Test_Data[i, predict];
                 string result = (real == predict) ? "OK" : "NG";
                 string fileName = ArrayFileName_Test[i];

@@ -20,13 +20,15 @@ namespace TensorFlowNET.Examples
 {
     /// <summary>
     /// Interface of Example project
-    /// All example should implement IExample so the entry program will find it.
+    /// Each example should implement IExample so the entry program will find it.
     /// </summary>
     public interface IExample
     {
         ExampleConfig Config { get; set; }
         ExampleConfig InitConfig();
         bool Run();
+
+        void BuildModel();
 
         /// <summary>
         /// Build dataflow graph, train and predict
